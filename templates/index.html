@@ -1,52 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Resume Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume Reviewer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8fafc;
+    }
+    .hero-gradient {
+      background: linear-gradient(120deg, #4f46e5 0%, #7c3aed 100%);
+    }
+    .custom-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .loading-spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      display: none;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .markdown-content {
+      font-family: 'Poppins', sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .markdown-content h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #4f46e5;
+    }
+    .markdown-content h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #4f46e5;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 0.25rem;
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .markdown-content ul {
+      list-style-type: disc;
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .markdown-content p {
+      margin-bottom: 1rem;
+    }
+    .markdown-content hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 1.5rem 0;
+    }
+    .markdown-content a {
+      color: #4f46e5;
+      text-decoration: none;
+    }
+    .markdown-content a:hover {
+      text-decoration: underline;
+    }
+    .markdown-content strong {
+      color: #4b5563;
+      font-weight: 600;
+    }
+    .download-button {
+      transition: all 0.3s ease;
+    }
+    .download-button:hover {
+      transform: translateY(-2px);
+    }
+    .file-input-label {
+      border: 2px dashed #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .file-input-label:hover {
+      border-color: #4f46e5;
+      background-color: #f5f3ff;
+    }
+    .file-input {
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      position: absolute;
+      z-index: -1;
+    }
+  </style>
 </head>
-<body>
-  <h1>Generate a Resume</h1>
-  <form method="POST" enctype="multipart/form-data">
-    <label for="jobDescription">Job Description:</label><br>
-    <textarea name="jobDescription" rows="10" cols="80" required></textarea><br><br>
-
-    <label for="resume">Upload Resume (optional):</label><br>
-    <input type="file" name="resume"><br><br>
-
-    <input type="submit" value="Generate Resume">
-  </form>
-
-  {% if generated_resume %}
-    <hr>
-    <h2>Generated Resume</h2>
-    <div id="resume-container" style="border:1px solid #ccc; padding:1em; margin-bottom:1em;">
-      <pre style="white-space: pre-wrap;">{{ generated_resume }}</pre>
+<body class="min-h-screen">
+  <div class="hero-gradient text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <h1 class="text-4xl font-bold mb-4">AI Resume Reviewer</h1>
+      <p class="text-xl max-w-3xl mx-auto">Create a tailored, professional resume in seconds with AI</p>
     </div>
+  </div>
 
-    <button onclick="downloadPDF()">Download as PDF (Client-side)</button>
-    <a href="/download/docx">Download .docx</a>
-    <a href="/download/md">Download .md</a>
+  <div class="max-w-7xl mx-auto px-4 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      <div class="space-y-8">
+        <div class="bg-white rounded-xl custom-shadow p-8 card-hover">
+          <h2 class="text-2xl font-semibold text-gray-800 mb-6">Generate Your Resume</h2>
+          <form method="POST" enctype="multipart/form-data" id="resumeForm" class="space-y-6">
+            <div>
+              <label for="resume" class="block text-sm font-medium text-gray-700 mb-2">Start with your existing resume (Optional)</label>
+              <label class="file-input-label block w-full">
+                <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span class="text-gray-600">Drag & drop your resume or click to browse</span>
+                <span class="text-xs text-gray-500 block mt-1">Supported formats: PDF, DOCX, TXT, MD</span>
+                <input type="file" name="resume" id="resume" accept=".pdf,.docx,.txt,.md" class="file-input" />
+              </label>
+              <div id="file-name" class="mt-2 text-sm text-gray-600"></div>
+            </div>
 
-    <script>
-      function downloadPDF() {
-        const element = document.getElementById("resume-container");
-        html2pdf()
-          .set({
-            margin: 0.5,
-            filename: 'resume.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-          })
-          .from(element)
-          .save();
+            <div>
+              <label for="jobDescription" class="block text-sm font-medium text-gray-700 mb-2">Paste the job description</label>
+              <textarea name="jobDescription" id="jobDescription" rows="10" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none p-4" placeholder="Paste the job description here to tailor your resume..." required></textarea>
+            </div>
+
+            <button type="submit" id="generateBtn" class="w-full hero-gradient text-white py-3 px-6 rounded-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center space-x-2 font-medium text-lg">
+              <div id="spinner" class="loading-spinner"></div>
+              <span id="buttonText">Generate Resume</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-xl custom-shadow p-8 card-hover">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Features</h3>
+          <ul class="space-y-3">
+            <li class="flex items-start"><svg class="w-5 h-5 text-indigo-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg><span>AI-driven resume customization for each job</span></li>
+            <li class="flex items-start"><svg class="w-5 h-5 text-indigo-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg><span>Professional formatting with consistent structure</span></li>
+            <li class="flex items-start"><svg class="w-5 h-5 text-indigo-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg><span>Download your resume in PDF, DOCX, or Markdown</span></li>
+            <li class="flex items-start"><svg class="w-5 h-5 text-indigo-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg><span>Highlights relevant skills and experiences</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div class="bg-white rounded-xl custom-shadow overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-semibold text-gray-800">Your Resume</h2>
+            {% if generated_resume %}
+            <div class="flex space-x-2">
+              <button onclick="downloadRenderedAsPDF()" type="button" class="download-button bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>PDF</span>
+              </button>
+              <a href="{{ url_for('download_file', format='docx') }}" class="download-button bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Word</a>
+              <a href="{{ url_for('download_file', format='md') }}" class="download-button bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">MD</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="overflow-y-auto p-6" style="max-height: calc(100vh - 250px);">
+          {% if error %}
+          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">{{ error }}</div>
+          {% endif %}
+
+          {% if generated_resume %}
+          <div id="resume-content" class="markdown-content"></div>
+          {% else %}
+          <div class="text-center text-gray-500 py-20">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p class="text-lg font-medium">Your generated resume will appear here</p>
+            <p class="text-sm mt-2">Enter a job description and click generate</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function renderMarkdown() {
+      const resumeContent = `{{ generated_resume | safe if generated_resume else '' }}`;
+      if (resumeContent) {
+        document.getElementById("resume-content").innerHTML = marked.parse(resumeContent);
       }
-    </script>
-  {% endif %}
+    }
 
-  {% if error %}
-    <p style="color:red;">Error: {{ error }}</p>
-  {% endif %}
+    function downloadRenderedAsPDF() {
+      const element = document.getElementById("resume-content");
+      html2pdf()
+        .set({
+          margin: 0.5,
+          filename: 'resume.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        })
+        .from(element)
+        .save();
+    }
+
+    document.getElementById('resume').addEventListener('change', function(e) {
+      const fileName = e.target.files[0] ? e.target.files[0].name : '';
+      document.getElementById('file-name').textContent = fileName ? 'Selected file: ' + fileName : '';
+    });
+
+    document.addEventListener('DOMContentLoaded', renderMarkdown);
+
+    document.getElementById('resumeForm').addEventListener('submit', function () {
+      const button = document.getElementById('generateBtn');
+      const spinner = document.getElementById('spinner');
+      const buttonText = document.getElementById('buttonText');
+
+      button.disabled = true;
+      spinner.style.display = 'block';
+      buttonText.textContent = 'Generating...';
+    });
+  </script>
 </body>
 </html>
