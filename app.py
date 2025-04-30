@@ -109,25 +109,25 @@ Ensure that there is no other text saying markdown or anything else
                 # Convert Markdown to PDF (Render-safe)
                 try:
                     pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
-                    print("✅ PDF created with installed pandoc.")
+                    print(" PDF created with installed pandoc.")
                     if os.path.exists("resume.pdf"):
-                        print("✅ resume.pdf exists and is ready for download.")
+                        print(" resume.pdf exists and is ready for download.")
                     else:
-                        print("❌ resume.pdf was NOT found after generation.")
+                        print(" resume.pdf was NOT found after generation.")
                 except OSError:
-                    print("⚠️ Pandoc not found. Attempting to download...")
+                    print(" Pandoc not found. Attempting to download...")
                     pypandoc.download_pandoc()
                     try:
                         pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
-                        print("✅ PDF created after downloading pandoc.")
+                        print(" PDF created after downloading pandoc.")
                         if os.path.exists("resume.pdf"):
-                            print("✅ resume.pdf exists and is ready for download.")
+                            print(" resume.pdf exists and is ready for download.")
                         else:
-                            print("❌ resume.pdf was NOT found after download and generation.")
+                            print(" resume.pdf was NOT found after download and generation.")
                     except Exception as e:
-                        print(f"❌ PDF generation failed even after downloading pandoc: {e}")
+                        print(f" PDF generation failed even after downloading pandoc: {e}")
                 except Exception as e:
-                    print(f"❌ General PDF conversion error: {e}")
+                    print(f" General PDF conversion error: {e}")
 
         except Exception as e:
             error = str(e)
@@ -142,10 +142,10 @@ def download_file(format):
     filename = f"resume.{format}"
     print(f"📁 Looking for: {filename} in {os.getcwd()}")
     if os.path.exists(filename):
-        print("✅ Found and returning file.")
+        print(" Found and returning file.")
         return send_file(filename, as_attachment=True)
     else:
-        print("❌ File not found.")
+        print(" File not found.")
     return "File not found", 404
 
 if __name__ == "__main__":
