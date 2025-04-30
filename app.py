@@ -112,7 +112,7 @@ Ensure that there is no other text saying markdown or anything else
 @app.route('/download/<format>')
 def download_file(format):
     filename = f"resume.{format}"
-    print(f"📁 Looking for: {filename} in {os.getcwd()}")
+    print(f" Looking for: {filename} in {os.getcwd()}")
     if os.path.exists(filename):
         return send_file(filename, as_attachment=True)
     return "File not found", 404
