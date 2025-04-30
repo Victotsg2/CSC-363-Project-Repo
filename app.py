@@ -183,15 +183,16 @@ Relevant Coursework: Data Structures, Web Design & Programming, Object-Oriented 
                     else:
                         doc.add_paragraph(line)
 
-                import pypandoc
+           import pypandoc
 
-                doc.save("resume.docx")
+doc.save("resume.docx")
 
 
-                try:
-                pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
-                except Exception as e:
-                  print(f"Error converting to PDF: {e}")
+try:
+    pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
+except Exception as e:
+    print(f"Error converting to PDF: {e}")
+
 
 
 @app.route('/download/<format>')
