@@ -184,11 +184,20 @@ Relevant Coursework: Data Structures, Web Design & Programming, Object-Oriented 
 
                 doc.save("resume.docx")
 
-                # Convert Markdown to PDF (Render-safe)
+                # Convert Markdown to PDF using pypandoc with fallback installer
                 try:
                     pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
+                    print("✅ PDF created with installed pandoc.")
+                except OSError:
+                    print("⚠️ Pandoc not found. Attempting to download...")
+                    pypandoc.download_pandoc()
+                    try:
+                        pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
+                        print("✅ PDF created after downloading pandoc.")
+                    except Exception as e:
+                        print(f"❌ PDF generation failed even after downloading pandoc: {e}")
                 except Exception as e:
-                    print(f"Error converting to PDF: {e}")
+                    print(f"❌ General PDF conversion error: {e}")
 
         except Exception as e:
             error = str(e)
@@ -209,4 +218,3 @@ def download_file(format):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000)) 
     app.run(host="0.0.0.0", port=port, debug=True)
-
