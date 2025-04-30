@@ -1,9 +1,8 @@
 from flask import Flask, render_template, request, send_file
 from langchain_openai import ChatOpenAI
-from docx import Document 
-from docx2pdf import convert
+from docx import Document
+import pypandoc
 import PyPDF2
-
 import io
 import os
 
@@ -46,7 +45,7 @@ def index():
                     base_resume = read_resume_file(file)
 
             if job_description:
-                # Initialize GPT4All with the mini model
+                # Initialize GPT model
                 llm = ChatOpenAI(model="gpt-4o-mini")
 
                 # Create prompt based on whether a resume was uploaded
@@ -153,15 +152,15 @@ Relevant Coursework: Data Structures, Web Design & Programming, Object-Oriented 
 - National Society of Black Engineers  
 - ColorStack  
 - INROADS  
-
 """
+
                 # Generate the tailored resume
                 response = llm.invoke(prompt)
                 if hasattr(response, 'content'):
                     response = response.content
-                # Remove any "markdown" text that might appear in the response
+
+                # Remove any "markdown" code block artifacts
                 response = response.replace("```markdown", "").replace("```", "")
-                
                 generated_resume = str(response) if response else ""
 
                 # Save as Markdown
@@ -183,17 +182,21 @@ Relevant Coursework: Data Structures, Web Design & Programming, Object-Oriented 
                     else:
                         doc.add_paragraph(line)
 
-           import pypandoc
+                doc.save("resume.docx")
 
-doc.save("resume.docx")
+                # Convert Markdown to PDF (Render-safe)
+                try:
+                    pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
+                except Exception as e:
+                    print(f"Error converting to PDF: {e}")
 
+        except Exception as e:
+            error = str(e)
+            print(f"Error: {e}")
 
-try:
-    pypandoc.convert_file("resume.md", "pdf", outputfile="resume.pdf")
-except Exception as e:
-    print(f"Error converting to PDF: {e}")
-
-
+    return render_template('index.html', 
+                         generated_resume=generated_resume, 
+                         error=error)
 
 @app.route('/download/<format>')
 def download_file(format):
@@ -206,3 +209,4 @@ def download_file(format):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000)) 
     app.run(host="0.0.0.0", port=port, debug=True)
+
