@@ -3,6 +3,7 @@ from langchain_openai import ChatOpenAI
 from docx import Document 
 from docx2pdf import convert
 import PyPDF2
+
 import io
 import os
 
@@ -69,19 +70,98 @@ Instructions:
                 else:
                     prompt = f"""Create a professional resume in markdown format based on this job description:
 
-Job Description:
-{job_description}
-
 Instructions:
 - Format the resume in proper markdown
 - Include relevant sections (Summary, Skills, Experience, Education)
 - Create content that matches the job requirements
-- Keep it to one page
+- Keep it to ONE PAGE ONLY
 - Make it professional and well-organized
 - Use realistic but fictional details
+DO NOT INCLUDE ANYTHING ELSE THAN THE RESUME
+Ensure that there is no other text saying markdown or anything else
+
+
+Do it in this format:
+
+# Sujar Henry  
+571-356-7863 | sujarhenry@gmail.com | [linkedin.com/in/sujar-henry](https://linkedin.com/in/sujar-henry) | [github.com/Sujar-Henry](https://github.com/Sujar-Henry)
+
+---
+
+## Summary  
+Detail-oriented and innovative Software Engineer Intern proficient in designing and developing AI and machine learning solutions. Adept at optimizing workflows and enhancing document processing efficiency. Strong foundation in computer science complemented by hands-on experience in deep learning, cloud technologies, and software development methodologies. Passionate about leveraging technology to automate processes and improve operational efficiency.
+
+---
+
+## Skills  
+
+- **Languages:** Python, Java, C++, HTML/CSS, JavaScript  
+- **Libraries/Frameworks:** PyTorch, TensorFlow, LangChain, NumPy, pandas  
+- **Cloud Technologies:** AWS Lambda, AWS S3, AWS API Gateway, AWS SES, Amazon DynamoDB  
+- **Developer Tools:** Git, IBM Cloud  
+- **Methodologies:** Agile Development, Machine Learning, Deep Learning  
+
+---
+
+## Experience  
+
+**IBM**  
+*Software Engineer Intern, Co-Op*  
+_August 2024 – Present_  
+- Developed an AI agent for automated Statement of Work (SOW) generation, leveraging Llama3 and Granite models in LangChain, reducing manual drafting time by 80%.
+- Enhanced the SOW agent by implementing a structured scope section, leading to a 30% increase in document approval efficiency.
+- Engineered AI-driven agents for workflow automation, utilizing LangChain and LangGraph, resulting in a 50% boost in operational efficiency.
+
+*Software Engineer Intern*  
+_May 2024 – August 2024_  
+- Developed an Agent Workflow for converting legal documentation into OpenFisca code, achieving a 70% reduction in manual coding time.
+- Integrated customizable LLM options, enabling users to select from WatsonX and OpenAI models, resulting in a 50% increase in OpenFisca code creation speed.
+- Improved system performance with a versatile Logic and Code Checker, reducing workflow waiting times by 40%.
+
+**Resilience Inc.**  
+*Software Engineer Intern*  
+_May 2023 – August 2023_  
+- Developed a deep learning model in TensorFlow for emotion recognition, achieving 85% accuracy on a test set of audio samples.
+- Engineered a Multi-Layer Perceptron (MLP) with a hidden layer size of 300, achieving 92% accuracy and strong performance metrics (F1-score: 0.82, AUC: 0.89).
+
+---
+
+## Education  
+
+**The Catholic University of America**, Washington, DC  
+*Bachelor of Science in Computer Science, Minor in Mathematics*  
+_Expected May 2026_  
+Relevant Coursework: Data Structures, Web Design & Programming, Object-Oriented Programming with Java  
+
+---
+
+## Projects  
+
+**Speech Translator**  
+*Technologies: Python, PyTorch, LibreSpeech*  
+- Implemented a speech-to-text ML model utilizing Wav2Vec2 and the LibriSpeech dataset, achieving high accuracy in emotion recognition.
+- Leveraged LibreTranslate API for multilingual text-to-speech conversion.
+
+**Serverless Portfolio**  
+*Technologies: AWS (Lambda, S3), HTML, CSS*  
+- Optimized S3 storage, reducing costs by 25% and ensuring rapid access speeds.
+- Implemented a REST API to enhance email capacity, increasing sending speed from 60 to 840 emails per minute.
+
+---
+
+## Affiliations  
+- National Society of Black Engineers  
+- ColorStack  
+- INROADS  
+
 """
-                # Generate resume
+                # Generate the tailored resume
                 response = llm.invoke(prompt)
+                if hasattr(response, 'content'):
+                    response = response.content
+                # Remove any "markdown" text that might appear in the response
+                response = response.replace("```markdown", "").replace("```", "")
+                
                 generated_resume = str(response) if response else ""
 
                 # Save as Markdown
